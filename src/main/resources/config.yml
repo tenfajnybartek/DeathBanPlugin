@@ -30,7 +30,7 @@ settings:
   exempt_permission: "deathban.vip"
   # ile sekund trwa odliczanie ostrzegawcze przed banem po śmierci
   preban_seconds: 20
-  # typ wyświetlania wiadomości ostrzegawczej: "chat", "title" lub "actionbar"
+  # typ wyświetlania wiadomości ostrzegawczej: "chat" lub "actionbar"
   preban_display: "actionbar"
   # dźwięk podczas odliczania co sekundę
   preban_sound: "BLOCK_NOTE_BLOCK_PLING"

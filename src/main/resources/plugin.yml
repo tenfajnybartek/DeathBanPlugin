@@ -1,0 +1,6 @@
+name: DeathBanPlugin
+version: '1.0.0-SNAPSHOT'
+main: pl.tenfajnybartek.deathbanplugin.DeathBanPlugin
+api-version: '1.21'
+authors: [ tenfajnybartek ]
+description: Plugin na gildie

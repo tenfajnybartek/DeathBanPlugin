@@ -15,6 +15,7 @@ import java.util.List;
 public final class DeathBanPlugin extends JavaPlugin {
 
     private Database database;
+    private int unbanTaskId = -1;
     private StorageManager storageManager;
     private ConfigManager configManager;
 
@@ -40,8 +41,9 @@ public final class DeathBanPlugin extends JavaPlugin {
         getCommand("deathban").setExecutor(new DeathBanCommand(this));
     }
 
+
     private void startUnbanTask() {
-        Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
+        unbanTaskId = Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
             List<Storage> toRemove = new ArrayList<>();
             for (Storage s : storageManager.getPlayerList()) {
                 if (System.currentTimeMillis() > s.getTime()) {
@@ -51,13 +53,17 @@ public final class DeathBanPlugin extends JavaPlugin {
             for (Storage s : toRemove) {
                 s.delete();
             }
-        }, 20L * 60, 20L * 60); // co minutę
+        }, 20L * 60, 20L * 60).getTaskId();
     }
 
     @Override
     public void onDisable() {
         getLogger().info("Wyłączanie pluginu...");
-        if (database != null) database.close(); // Synchronnie (ważne: NIE scheduler!)
+        if (unbanTaskId != -1) {
+            Bukkit.getScheduler().cancelTask(unbanTaskId);
+            unbanTaskId = -1;
+        }
+        if (database != null) database.close();
     }
 
     public Database getDatabase() { return database; }

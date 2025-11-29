@@ -25,7 +25,6 @@ public class PlayerBanListener implements Listener {
         this.plugin = plugin;
     }
 
-    // NOWOCZESNY PRE-LOGIN
     @EventHandler(priority = EventPriority.LOWEST)
     public void onPreLogin(AsyncPlayerPreLoginEvent event) {
         UUID uuid = event.getUniqueId();
@@ -51,7 +50,8 @@ public class PlayerBanListener implements Listener {
         PlayerPreBanEvent preBanEvent = new PlayerPreBanEvent(event.getEntity(), banTime);
         Bukkit.getServer().getPluginManager().callEvent(preBanEvent);
 
-        if (preBanEvent.isCancelled()) return; // VIP = NO BAN!
+        // VIP = brak bana i komunikatu!
+        if (preBanEvent.isCancelled()) return;
 
         UUID uuid = event.getEntity().getUniqueId();
         String nick = event.getEntity().getName();
@@ -65,6 +65,7 @@ public class PlayerBanListener implements Listener {
         ).replace("%0", DateUtils.formatDate(preBanEvent.getTime()));
         ChatUtils.sendMessage(event.getEntity(), deathbanMsg);
 
+        // Kicking po 3 sek.
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (recentlyBanned.contains(uuid)) {
                 recentlyBanned.remove(uuid);
@@ -72,7 +73,7 @@ public class PlayerBanListener implements Listener {
                         .replace("%0", DateUtils.formatDate(storage.getTime()));
                 ChatUtils.kickWithMessage(event.getEntity(), kickMsg);
             }
-        }, 20L * 3); // (możesz zwiększyć czas)
+        }, 20L * 3);
     }
 
     @EventHandler

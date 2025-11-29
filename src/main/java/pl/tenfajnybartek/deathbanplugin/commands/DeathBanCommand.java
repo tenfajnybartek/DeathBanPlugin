@@ -29,7 +29,7 @@ public class DeathBanCommand implements CommandExecutor {
         // Argument check
         if (args.length < 1 || args.length > 2) {
             ChatUtils.sendMessage(sender,
-                    configManager.getMessage("usage", "&7Użycie: &f/hardcorebans <unban|unbanall|checkban> [gracz]"));
+                    configManager.getMessage("usage", "&7Użycie: &f/deathban <unban|unbanall|checkban> [gracz]"));
             return true;
         }
 
@@ -70,8 +70,9 @@ public class DeathBanCommand implements CommandExecutor {
                     String msg = configManager.getMessage("not_banned", "&cGracz &e%0 &cnie jest zbanowany.");
                     ChatUtils.sendMessage(sender, msg.replace("%0", args[1]));
                 } else {
+                    String formattedDate = pl.tenfajnybartek.deathbanplugin.utils.DateUtils.formatDate(s.getTime());
                     String msg = configManager.getMessage("ban_check", "&e%0 &ajest zbanowany do &b%1");
-                    ChatUtils.sendMessage(sender, msg.replace("%0", s.getNick()).replace("%1", String.valueOf(s.getTime())));
+                    ChatUtils.sendMessage(sender, msg.replace("%0", s.getNick()).replace("%1", formattedDate));
                 }
             }
             case "reload" -> {
@@ -80,7 +81,7 @@ public class DeathBanCommand implements CommandExecutor {
                         configManager.getMessage("reload", "&aKonfiguracja została przeładowana."));
             }
             default -> ChatUtils.sendMessage(sender,
-                    configManager.getMessage("usage", "&7Użycie: &f/hardcorebans <unban|unbanall|checkban> [gracz]"));
+                    configManager.getMessage("usage", "&7Użycie: &f/deathban <unban|unbanall|checkban> [gracz]"));
         }
         return true;
     }

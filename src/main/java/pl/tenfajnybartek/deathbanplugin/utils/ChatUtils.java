@@ -16,10 +16,6 @@ public class ChatUtils {
         sender.sendMessage(color(message));
     }
 
-    public static void sendMessage(CommandSender sender, Component component) {
-        sender.sendMessage(component);
-    }
-
     public static void kickWithMessage(Player player, String message) {
         player.kick(color(message));
     }

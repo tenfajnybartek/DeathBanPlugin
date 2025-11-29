@@ -7,7 +7,7 @@ mysql:
 
 messages:
   no_permission: "&cNie masz uprawnień."
-  usage: "&7Użycie: &f/hardcorebans <unban|unbanall|checkban> [gracz]"
+  usage: "&7Użycie: &f/deathban <unban|unbanall|checkban> [gracz]"
   unbanall: "&aOdbanowano wszystkich (&e%0&a)"
   no_player: "&cPodaj nick gracza."
   not_banned: "&cGracz &e%0 &cnie jest zbanowany."

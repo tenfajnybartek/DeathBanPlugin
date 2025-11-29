@@ -9,7 +9,7 @@ commands:
   deathban:
     description: Komenda do zarządzania deathbanami (unban, checkban, reload, unbanall)
     usage: /<command> <unban|unbanall|checkban|reload> [nick]
-    permission: hardcorebans.command.use
+    permission: deathban.command.use
     aliases: [hcban]
 
 permissions:

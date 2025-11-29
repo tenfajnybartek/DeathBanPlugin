@@ -6,6 +6,7 @@ import org.bukkit.command.CommandSender;
 import pl.tenfajnybartek.deathbanplugin.base.DeathBanPlugin;
 import pl.tenfajnybartek.deathbanplugin.database.Storage;
 import pl.tenfajnybartek.deathbanplugin.utils.ChatUtils;
+import pl.tenfajnybartek.deathbanplugin.utils.DateUtils;
 
 import java.util.List;
 
@@ -72,7 +73,7 @@ public class DeathBanCommand implements CommandExecutor {
                 } else {
                     String formattedDate = pl.tenfajnybartek.deathbanplugin.utils.DateUtils.formatDate(s.getTime());
                     String msg = configManager.getMessage("ban_check", "&e%0 &ajest zbanowany do &b%1");
-                    ChatUtils.sendMessage(sender, msg.replace("%0", s.getNick()).replace("%1", formattedDate));
+                    ChatUtils.sendMessage(sender, msg.replace("%0", s.getNick()).replace("%1", DateUtils.formatDate(s.getTime())));
                 }
             }
             case "reload" -> {

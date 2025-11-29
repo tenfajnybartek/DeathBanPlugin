@@ -24,3 +24,7 @@ settings:
   deathban_seconds: 86400
   # Uprawnienie do zwolnienia z deathbana
   exempt_permission: "deathban.vip"
+  # czas pożegnania w sekundach
+  preban_seconds: 20
+  # "chat", "title" lub "actionbar"
+  preban_display: "chat"

@@ -22,8 +22,6 @@ public final class DeathBanPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         getLogger().info("Włączanie pluginu...");
-        saveDefaultConfig();
-
         configManager = new ConfigManager(this);
         database = new Database(
                 this,

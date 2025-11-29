@@ -15,7 +15,6 @@ mysql:
 settings:
   deathban_seconds: 86400 # ile sekund trwa ban po śmierci (domyślnie 24h)
   exempt_permission: "deathban.vip"
-```
 
 ## Komendy
 

@@ -34,9 +34,12 @@ public class Database {
     }
 
     public void close() {
-        if (dataSource != null && !dataSource.isClosed()) {
-            dataSource.close();
-            plugin.getLogger().info("Połączenie z bazą MySQL zamknięte.");
+        try {
+            if (dataSource != null && !dataSource.isClosed()) {
+                dataSource.close(); // Szybko i synchronnie!
+            }
+        } catch (Exception e) {
+            plugin.getLogger().warning("Błąd podczas rozłączania bazy danych: " + e.getMessage());
         }
     }
 

@@ -5,7 +5,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.player.PlayerLoginEvent;
+import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import pl.tenfajnybartek.deathbanplugin.base.DeathBanPlugin;
 import pl.tenfajnybartek.deathbanplugin.database.Storage;
@@ -25,17 +25,19 @@ public class PlayerBanListener implements Listener {
         this.plugin = plugin;
     }
 
+    // NOWOCZESNY PRE-LOGIN
     @EventHandler(priority = EventPriority.LOWEST)
-    public void onLogin(PlayerLoginEvent event) {
-        UUID uuid = event.getPlayer().getUniqueId();
+    public void onPreLogin(AsyncPlayerPreLoginEvent event) {
+        UUID uuid = event.getUniqueId();
         Storage storage = plugin.getStorageManager().getPlayerByUuid(uuid);
         if (storage == null) return;
 
         long now = System.currentTimeMillis();
         if (storage.getTime() >= now) {
-            String kickMsg = plugin.getConfigManager().getMessage("ban_kick", "&cNie możesz wejść na serwer do &e%0 &c!")
-                    .replace("%0", DateUtils.formatDate(storage.getTime()));
-            event.disallow(PlayerLoginEvent.Result.KICK_OTHER, kickMsg);
+            String kickMsg = plugin.getConfigManager().getMessage(
+                    "ban_kick", "&cNie możesz wejść na serwer do &e%0 &c!"
+            ).replace("%0", DateUtils.formatDate(storage.getTime()));
+            ChatUtils.disallowPreLoginWithMessage(event, kickMsg);
             return;
         }
         storage.delete();
@@ -49,7 +51,7 @@ public class PlayerBanListener implements Listener {
         PlayerPreBanEvent preBanEvent = new PlayerPreBanEvent(event.getEntity(), banTime);
         Bukkit.getServer().getPluginManager().callEvent(preBanEvent);
 
-        if (preBanEvent.isCancelled()) return;
+        if (preBanEvent.isCancelled()) return; // VIP = NO BAN!
 
         UUID uuid = event.getEntity().getUniqueId();
         String nick = event.getEntity().getName();
@@ -58,8 +60,9 @@ public class PlayerBanListener implements Listener {
         plugin.getStorageManager().getPlayerList().add(storage);
         recentlyBanned.add(uuid);
 
-        String deathbanMsg = plugin.getConfigManager().getMessage("deathban", "&cZostałeś zbanowany do &e%0 &c!")
-                .replace("%0", DateUtils.formatDate(preBanEvent.getTime()));
+        String deathbanMsg = plugin.getConfigManager().getMessage(
+                "deathban", "&cZostałeś zbanowany do &e%0 &c!"
+        ).replace("%0", DateUtils.formatDate(preBanEvent.getTime()));
         ChatUtils.sendMessage(event.getEntity(), deathbanMsg);
 
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
@@ -67,9 +70,9 @@ public class PlayerBanListener implements Listener {
                 recentlyBanned.remove(uuid);
                 String kickMsg = plugin.getConfigManager().getMessage("ban_kick", "&cNie możesz wejść na serwer do &e%0 &c!")
                         .replace("%0", DateUtils.formatDate(storage.getTime()));
-                event.getEntity().kickPlayer(kickMsg);
+                ChatUtils.kickWithMessage(event.getEntity(), kickMsg);
             }
-        }, 20L * 3); // (możesz zmienić czas)
+        }, 20L * 3); // (możesz zwiększyć czas)
     }
 
     @EventHandler

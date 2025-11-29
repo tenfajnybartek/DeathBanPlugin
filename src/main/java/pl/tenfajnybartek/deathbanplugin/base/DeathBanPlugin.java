@@ -39,6 +39,7 @@ public final class DeathBanPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PlayerBanListener(this), this);
         getCommand("deathban").setExecutor(new DeathBanCommand(this));
     }
+
     private void startUnbanTask() {
         Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
             List<Storage> toRemove = new ArrayList<>();
@@ -52,10 +53,11 @@ public final class DeathBanPlugin extends JavaPlugin {
             }
         }, 20L * 60, 20L * 60); // co minutę
     }
+
     @Override
     public void onDisable() {
         getLogger().info("Wyłączanie pluginu...");
-        if (database != null) database.close();
+        if (database != null) database.close(); // Synchronnie (ważne: NIE scheduler!)
     }
 
     public Database getDatabase() { return database; }

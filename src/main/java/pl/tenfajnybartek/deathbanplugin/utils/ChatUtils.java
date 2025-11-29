@@ -8,9 +8,11 @@ import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 
 public class ChatUtils {
 
+    private static final LegacyComponentSerializer SERIALIZER =
+            LegacyComponentSerializer.legacyAmpersand();
+
     public static Component color(String message) {
-        // Pozostawiamy domyślny legacy ampersand z obsługą UTF-8 (nie koduje polskich znaków na phi/krzaczki!)
-        return LegacyComponentSerializer.legacyAmpersand().deserialize(message);
+        return SERIALIZER.deserialize(message);
     }
 
     public static void sendMessage(CommandSender sender, String message) {
@@ -18,17 +20,15 @@ public class ChatUtils {
     }
 
     public static void kickWithMessage(Player player, String message) {
-        // Adventure obsługuje polskie znaki/UTF-8!
         player.kick(color(message));
     }
 
     public static void disallowPreLoginWithMessage(AsyncPlayerPreLoginEvent event, String message) {
-        // Nowa wersja: wysyłaj wiadomość bez konwersji do legacy ASCII, działa w UTF-8!
-        event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, message);
+        event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, color(message));
     }
 
+    // Zamiana & na §, tylko jeśli musisz legacy do starego API
     public static String colorToLegacy(String msg) {
-        // Możesz zostawić, nie używać do kicka
         return msg.replace('&', '§');
     }
 }

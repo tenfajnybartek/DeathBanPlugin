@@ -1,7 +1,10 @@
 package pl.tenfajnybartek.deathbanplugin.listeners;
 
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.Sound;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -23,10 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class PlayerBanListener implements Listener {
     private final DeathBanPlugin plugin;
-
-    // UUID -> czas końca odliczania
     private final Map<UUID, Long> pendingBanTimeout = new ConcurrentHashMap<>();
-    // UUID -> task odliczania
     private final Map<UUID, BukkitTask> pendingBanTasks = new ConcurrentHashMap<>();
 
     public PlayerBanListener(DeathBanPlugin plugin) {
@@ -42,7 +42,7 @@ public class PlayerBanListener implements Listener {
         long now = System.currentTimeMillis();
         if (storage.getTime() >= now) {
             String kickMsg = plugin.getConfigManager().getMessage(
-                    "ban_kick", "&4&lBAN SMIERTELNY: &cNie mozesz wejsc na serwer do &e%0 &c!"
+                    "ban_kick", "&4&lBAN SMIERTELNY: &cNie możesz wejść na serwer do &e%0 &c!"
             ).replace("%0", DateUtils.formatDate(storage.getTime()));
             ChatUtils.disallowPreLoginWithMessage(event, kickMsg);
             return;
@@ -58,7 +58,6 @@ public class PlayerBanListener implements Listener {
         int prebanSeconds = plugin.getConfig().getInt("settings.preban_seconds", 20);
         int deathbanSeconds = plugin.getConfigManager().getDeathbanSeconds();
 
-        // Ban czas docelowy
         long banEndTime = System.currentTimeMillis() + (deathbanSeconds * 1000L);
 
         PlayerPreBanEvent preBanEvent = new PlayerPreBanEvent(player, banEndTime);
@@ -69,20 +68,17 @@ public class PlayerBanListener implements Listener {
         long preBanEnd = System.currentTimeMillis() + (prebanSeconds * 1000L);
         pendingBanTimeout.put(uuid, preBanEnd);
 
-        // Pobierz dane z configu do odliczania
         String rawMessage = plugin.getConfigManager().getMessage("preban_message",
-                "&cZostales smiertelnie ranny! Za &e%time% &csekund zostaniesz zbanowany po smierci!");
+                "&cZostałeś śmiertelnie ranny! Za &e%time% &csekund zostaniesz zbanowany po śmierci!");
         String displayType = plugin.getConfig().getString("settings.preban_display", "chat");
-        String tickSound = plugin.getConfig().getString("settings.preban_sound", "").toUpperCase(); // np. "BLOCK_NOTE_BLOCK_PLING"
+        String tickSound = plugin.getConfig().getString("settings.preban_sound", "").toUpperCase();
 
-        // Start cyklicznego tasku odliczania
         BukkitTask task = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             long now = System.currentTimeMillis();
             int secondsLeft = (int) Math.max(0, (preBanEnd - now) / 1000);
             if (secondsLeft < 1) return;
             String msg = rawMessage.replace("%time%", String.valueOf(secondsLeft));
             sendBanMessage(player, msg, displayType);
-            // Odtwarzaj dźwięk (jeśli ustawiłeś w configu)
             if (!tickSound.isEmpty()) {
                 try {
                     player.playSound(
@@ -93,7 +89,6 @@ public class PlayerBanListener implements Listener {
         }, 0L, 20L);
         pendingBanTasks.put(uuid, task);
 
-        // Finalny ban + dźwięk + osobna wiadomość wg configu
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (pendingBanTimeout.containsKey(uuid)) {
                 pendingBanTimeout.remove(uuid);
@@ -104,14 +99,13 @@ public class PlayerBanListener implements Listener {
                 storage.save();
                 plugin.getStorageManager().getPlayerList().add(storage);
 
-                // Wiadomość finalna (np. "Zostałeś zbanowany za śmierć!") i typ wyświetlania
                 String finalBanMsg = plugin.getConfigManager().getMessage(
-                        "final_ban_message", "&cZostales zbanowany po smierci!"); // nowa wiadomość
+                        "final_ban_message", "&cZostałeś zbanowany po śmierci!"
+                );
                 finalBanMsg = finalBanMsg.replace("%date%", DateUtils.formatDate(storage.getTime()));
                 String deathbanDisplay = plugin.getConfig().getString("settings.deathban_display", "chat");
                 sendBanMessage(player, finalBanMsg, deathbanDisplay);
 
-                // Dźwięk finalny (możesz ustawić w configu np. ENTITY_ENDER_DRAGON_GROWL)
                 String finalBanSound = plugin.getConfig().getString("settings.deathban_sound", "").toUpperCase();
                 if (!finalBanSound.isEmpty()) {
                     try {
@@ -121,9 +115,8 @@ public class PlayerBanListener implements Listener {
                     } catch (Exception ignored) {}
                 }
 
-                // Kick z klasyczną wiadomością deathban/kick (chat, bo kicks nie wspierają title!)
                 String deathbanMsg = plugin.getConfigManager().getMessage(
-                        "deathban", "&cZostales zbanowany do &e%0 &c!"
+                        "deathban", "&cZostałeś zbanowany do &e%0 &c!"
                 ).replace("%0", DateUtils.formatDate(storage.getTime()));
                 ChatUtils.kickWithMessage(player, deathbanMsg);
             }
@@ -133,7 +126,6 @@ public class PlayerBanListener implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void onQuit(PlayerQuitEvent event) {
         UUID uuid = event.getPlayer().getUniqueId();
-        // Jeśli gracz wyjdzie zanim upłynie odliczanie
         if (pendingBanTimeout.containsKey(uuid)) {
             pendingBanTimeout.remove(uuid);
             BukkitTask countdown = pendingBanTasks.remove(uuid);
@@ -156,10 +148,11 @@ public class PlayerBanListener implements Listener {
         }
     }
 
-    // Typ wyświetlania wiadomości: chat, title, actionbar
     private void sendBanMessage(Player player, String message, String displayType) {
         switch (displayType.toLowerCase()) {
-            case "title" -> player.sendTitle(ChatUtils.colorToLegacy(message), "", 10, 40, 10);
+            case "title" -> player.showTitle(
+                    Title.title(ChatUtils.color(message), Component.empty())
+            );
             case "actionbar" -> player.sendActionBar(ChatUtils.color(message));
             default -> ChatUtils.sendMessage(player, message);
         }

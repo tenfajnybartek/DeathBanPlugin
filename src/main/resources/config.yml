@@ -1,0 +1,26 @@
+mysql:
+  host: "localhost"
+  port: 3306
+  user: "deathban"
+  password: "supersecret"
+  database: "deathban"
+
+messages:
+  no_permission: "&cNie masz uprawnień."
+  usage: "&7Użycie: &f/hardcorebans <unban|unbanall|checkban> [gracz]"
+  unbanall: "&aOdbanowano wszystkich (&e%0&a)"
+  no_player: "&cPodaj nick gracza."
+  not_banned: "&cGracz &e%0 &cnie jest zbanowany."
+  unban: "&aGracz &e%0 &azostał odbanowany."
+  ban_check: "&e%0 &ajest zbanowany do &b%1"
+  deathban: "&cZostałeś zbanowany do &e%0 &c!"
+  ban_kick: "&cNie możesz wejść na serwer do &e%0 &c!"
+  already_banned: "&cGracz &e%0 &cjest już zbanowany."
+  reload: "&aKonfiguracja została przeładowana."
+  error: "&cWystąpił błąd: &e%0"
+
+settings:
+  # Liczba sekund bana po śmierci
+  deathban_seconds: 86400
+  # Uprawnienie do zwolnienia z deathbana
+  exempt_permission: "deathban.vip"

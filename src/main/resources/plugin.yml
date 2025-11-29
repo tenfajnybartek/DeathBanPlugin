@@ -1,6 +1,21 @@
 name: DeathBanPlugin
 version: '1.0.0-SNAPSHOT'
-main: pl.tenfajnybartek.deathbanplugin.DeathBanPlugin
+main: pl.tenfajnybartek.deathbanplugin.base.DeathBanPlugin
 api-version: '1.21'
 authors: [ tenfajnybartek ]
-description: Plugin na gildie
+description: Plugin na bana po śmierci.
+
+commands:
+  deathban:
+    description: Komenda do zarządzania deathbanami (unban, checkban, reload, unbanall)
+    usage: /<command> <unban|unbanall|checkban|reload> [nick]
+    permission: hardcorebans.command.use
+    aliases: [hcban]
+
+permissions:
+  deathban.command.use:
+    description: Pozwala na użycie komendy deathban.
+    default: op
+  deathban.vip:
+    description: Zwalnia z deathbana po śmierci.
+    default: false

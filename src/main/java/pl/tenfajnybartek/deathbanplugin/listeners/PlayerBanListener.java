@@ -11,14 +11,15 @@ import pl.tenfajnybartek.deathbanplugin.base.DeathBanPlugin;
 import pl.tenfajnybartek.deathbanplugin.database.Storage;
 import pl.tenfajnybartek.deathbanplugin.events.PlayerPreBanEvent;
 import pl.tenfajnybartek.deathbanplugin.utils.ChatUtils;
+import pl.tenfajnybartek.deathbanplugin.utils.DateUtils;
 
-import java.text.SimpleDateFormat;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 public class PlayerBanListener implements Listener {
     private final DeathBanPlugin plugin;
-    private final Set<String> recentlyBanned = new HashSet<>();
+    private final Set<UUID> recentlyBanned = new HashSet<>();
 
     public PlayerBanListener(DeathBanPlugin plugin) {
         this.plugin = plugin;
@@ -26,13 +27,14 @@ public class PlayerBanListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onLogin(PlayerLoginEvent event) {
-        Storage storage = plugin.getStorageManager().getPlayerByNick(event.getPlayer().getName());
+        UUID uuid = event.getPlayer().getUniqueId();
+        Storage storage = plugin.getStorageManager().getPlayerByUuid(uuid);
         if (storage == null) return;
 
         long now = System.currentTimeMillis();
         if (storage.getTime() >= now) {
             String kickMsg = plugin.getConfigManager().getMessage("ban_kick", "&cNie możesz wejść na serwer do &e%0 &c!")
-                    .replace("%0", formatDate(storage.getTime()));
+                    .replace("%0", DateUtils.formatDate(storage.getTime()));
             event.disallow(PlayerLoginEvent.Result.KICK_OTHER, kickMsg);
             return;
         }
@@ -49,22 +51,25 @@ public class PlayerBanListener implements Listener {
 
         if (preBanEvent.isCancelled()) return;
 
-        Storage storage = new Storage(plugin, event.getEntity().getName(), preBanEvent.getTime());
+        UUID uuid = event.getEntity().getUniqueId();
+        String nick = event.getEntity().getName();
+        Storage storage = new Storage(plugin, uuid, nick, preBanEvent.getTime());
+        storage.save();
         plugin.getStorageManager().getPlayerList().add(storage);
-        recentlyBanned.add(storage.getNick());
+        recentlyBanned.add(uuid);
 
         String deathbanMsg = plugin.getConfigManager().getMessage("deathban", "&cZostałeś zbanowany do &e%0 &c!")
-                .replace("%0", formatDate(preBanEvent.getTime()));
+                .replace("%0", DateUtils.formatDate(preBanEvent.getTime()));
         ChatUtils.sendMessage(event.getEntity(), deathbanMsg);
 
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            if (recentlyBanned.contains(storage.getNick())) {
-                recentlyBanned.remove(storage.getNick());
+            if (recentlyBanned.contains(uuid)) {
+                recentlyBanned.remove(uuid);
                 String kickMsg = plugin.getConfigManager().getMessage("ban_kick", "&cNie możesz wejść na serwer do &e%0 &c!")
-                        .replace("%0", formatDate(storage.getTime()));
+                        .replace("%0", DateUtils.formatDate(storage.getTime()));
                 event.getEntity().kickPlayer(kickMsg);
             }
-        }, 20L * 3);
+        }, 20L * 3); // (możesz zmienić czas)
     }
 
     @EventHandler
@@ -77,11 +82,6 @@ public class PlayerBanListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onQuit(PlayerQuitEvent event) {
-        recentlyBanned.remove(event.getPlayer().getName());
-    }
-
-    private String formatDate(long time) {
-        SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
-        return sdf.format(time);
+        recentlyBanned.remove(event.getPlayer().getUniqueId());
     }
 }

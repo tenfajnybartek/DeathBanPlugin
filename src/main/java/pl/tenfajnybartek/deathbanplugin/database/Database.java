@@ -5,6 +5,7 @@ import com.zaxxer.hikari.HikariDataSource;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.sql.*;
+import java.util.UUID;
 import java.util.logging.Level;
 
 public class Database {
@@ -42,9 +43,10 @@ public class Database {
     private void createTableIfNotExists() {
         String sql =
                 "CREATE TABLE IF NOT EXISTS deathban_players (" +
+                        "  uuid VARCHAR(36) NOT NULL," +
                         "  nick VARCHAR(32) NOT NULL," +
                         "  time BIGINT NOT NULL," +
-                        "  PRIMARY KEY (nick)" +
+                        "  PRIMARY KEY (uuid)" +
                         ")";
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement()) {
@@ -54,21 +56,23 @@ public class Database {
         }
     }
 
-    public void saveBan(String nick, long time) {
-        String sqlUpdate = "UPDATE deathban_players SET time = ? WHERE nick = ?";
-        String sqlInsert = "INSERT INTO deathban_players (nick, time) VALUES (?, ?)";
+    public void saveBan(UUID uuid, String nick, long time) {
+        String sqlUpdate = "UPDATE deathban_players SET nick = ?, time = ? WHERE uuid = ?";
+        String sqlInsert = "INSERT INTO deathban_players (uuid, nick, time) VALUES (?, ?, ?)";
 
         try (Connection conn = getConnection()) {
             int updated;
             try (PreparedStatement ps = conn.prepareStatement(sqlUpdate)) {
-                ps.setLong(1, time);
-                ps.setString(2, nick);
+                ps.setString(1, nick);
+                ps.setLong(2, time);
+                ps.setString(3, uuid.toString());
                 updated = ps.executeUpdate();
             }
             if (updated == 0) {
                 try (PreparedStatement ps = conn.prepareStatement(sqlInsert)) {
-                    ps.setString(1, nick);
-                    ps.setLong(2, time);
+                    ps.setString(1, uuid.toString());
+                    ps.setString(2, nick);
+                    ps.setLong(3, time);
                     ps.executeUpdate();
                 }
             }
@@ -77,35 +81,35 @@ public class Database {
         }
     }
 
-    public void deleteBan(String nick) {
-        String sql = "DELETE FROM deathban_players WHERE nick = ?";
+    public void deleteBan(UUID uuid) {
+        String sql = "DELETE FROM deathban_players WHERE uuid = ?";
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, nick);
+            ps.setString(1, uuid.toString());
             ps.executeUpdate();
         } catch (SQLException e) {
-            plugin.getLogger().log(Level.SEVERE, "Błąd podczas usuwania bana gracza " + nick + ": " + e.getMessage());
+            plugin.getLogger().log(Level.SEVERE, "Błąd podczas usuwania bana gracza " + uuid + ": " + e.getMessage());
         }
     }
 
-    public Long getBanTime(String nick) {
-        String sql = "SELECT time FROM deathban_players WHERE nick = ?";
+    public Long getBanTime(UUID uuid) {
+        String sql = "SELECT time FROM deathban_players WHERE uuid = ?";
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, nick);
+            ps.setString(1, uuid.toString());
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return rs.getLong("time");
                 }
             }
         } catch (SQLException e) {
-            plugin.getLogger().log(Level.SEVERE, "Błąd podczas pobierania czasu bana gracza " + nick + ": " + e.getMessage());
+            plugin.getLogger().log(Level.SEVERE, "Błąd podczas pobierania czasu bana gracza " + uuid + ": " + e.getMessage());
         }
         return null;
     }
 
     public ResultSet getAllBans(Connection conn) throws SQLException {
-        String sql = "SELECT nick, time FROM deathban_players";
+        String sql = "SELECT uuid, nick, time FROM deathban_players";
         PreparedStatement ps = conn.prepareStatement(sql);
         return ps.executeQuery();
     }

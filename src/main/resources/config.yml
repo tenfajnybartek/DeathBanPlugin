@@ -13,18 +13,24 @@ messages:
   not_banned: "&cGracz &e%0 &cnie jest zbanowany."
   unban: "&aGracz &e%0 &azostał odbanowany."
   ban_check: "&e%0 &ajest zbanowany do &b%1"
-  deathban: "&cZostałeś zbanowany do &e%0 &c!"
-  ban_kick: "&cNie możesz wejść na serwer do &e%0 &c!"
+  deathban: "&cZostales zbanowany do &e%0&c!"
+  ban_kick: "&4&lBAN SMIERTELNY: &cNie mozesz wejsc na serwer do &e%0 &c!"
   already_banned: "&cGracz &e%0 &cjest już zbanowany."
   reload: "&aKonfiguracja została przeładowana."
   error: "&cWystąpił błąd: &e%0"
+  preban_message: "&cZostales smiertelnie ranny! Za &e%time% &csekund zostaniesz zbanowany po smierci!"
+  final_ban_message: "&cZostales zbanowany po smierci! Powrót na serwer możliwy do &e%date%&c!"
 
 settings:
-  # Liczba sekund bana po śmierci
   deathban_seconds: 86400
-  # Uprawnienie do zwolnienia z deathbana
   exempt_permission: "deathban.vip"
   # czas pożegnania w sekundach
   preban_seconds: 20
-  # "chat", "title" lub "actionbar"
-  preban_display: "chat"
+  # "chat", "title" lub "actionbar" dla odliczania
+  preban_display: "actionbar"
+  # Dźwięk przy każdej sekundzie odliczania (np. BLOCK_NOTE_BLOCK_PLING lub puste "")
+  preban_sound: "BLOCK_NOTE_BLOCK_PLING"
+  # "chat", "title" lub "actionbar" przy finalnym banie
+  deathban_display: "title"
+  # Dźwięk przy finalnym banie (np. ENTITY_ENDER_DRAGON_GROWL lub puste "")
+  deathban_sound: "ENTITY_ENDER_DRAGON_GROWL"

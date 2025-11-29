@@ -1,5 +1,7 @@
 package pl.tenfajnybartek.deathbanplugin.listeners;
 
+import net.kyori.adventure.key.Key;
+import net.kyori.adventure.sound.Sound;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -40,7 +42,7 @@ public class PlayerBanListener implements Listener {
         long now = System.currentTimeMillis();
         if (storage.getTime() >= now) {
             String kickMsg = plugin.getConfigManager().getMessage(
-                    "ban_kick", "&cNie możesz wejść na serwer do &e%0 &c!"
+                    "ban_kick", "&4&lBAN SMIERTELNY: &cNie mozesz wejsc na serwer do &e%0 &c!"
             ).replace("%0", DateUtils.formatDate(storage.getTime()));
             ChatUtils.disallowPreLoginWithMessage(event, kickMsg);
             return;
@@ -67,21 +69,31 @@ public class PlayerBanListener implements Listener {
         long preBanEnd = System.currentTimeMillis() + (prebanSeconds * 1000L);
         pendingBanTimeout.put(uuid, preBanEnd);
 
-        // Start cyklicznego tasku
+        // Pobierz dane z configu do odliczania
         String rawMessage = plugin.getConfigManager().getMessage("preban_message",
-                "&cZostałeś śmiertelnie ranny! Za &e%time% &csekund zostaniesz zbanowany po śmierci!");
+                "&cZostales smiertelnie ranny! Za &e%time% &csekund zostaniesz zbanowany po smierci!");
         String displayType = plugin.getConfig().getString("settings.preban_display", "chat");
+        String tickSound = plugin.getConfig().getString("settings.preban_sound", "").toUpperCase(); // np. "BLOCK_NOTE_BLOCK_PLING"
 
+        // Start cyklicznego tasku odliczania
         BukkitTask task = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             long now = System.currentTimeMillis();
             int secondsLeft = (int) Math.max(0, (preBanEnd - now) / 1000);
             if (secondsLeft < 1) return;
             String msg = rawMessage.replace("%time%", String.valueOf(secondsLeft));
             sendBanMessage(player, msg, displayType);
+            // Odtwarzaj dźwięk (jeśli ustawiłeś w configu)
+            if (!tickSound.isEmpty()) {
+                try {
+                    player.playSound(
+                            Sound.sound(Key.key(tickSound.toLowerCase()), Sound.Source.PLAYER, 1.0f, 1.0f)
+                    );
+                } catch (Exception ignored) {}
+            }
         }, 0L, 20L);
         pendingBanTasks.put(uuid, task);
 
-        // Harmonogram: po prebanSeconds następuje ban (jeśli gracz nie wyszedł)
+        // Finalny ban + dźwięk + osobna wiadomość wg configu
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (pendingBanTimeout.containsKey(uuid)) {
                 pendingBanTimeout.remove(uuid);
@@ -92,11 +104,27 @@ public class PlayerBanListener implements Listener {
                 storage.save();
                 plugin.getStorageManager().getPlayerList().add(storage);
 
-                String deathbanMsg = plugin.getConfigManager().getMessage(
-                        "deathban", "&cZostałeś zbanowany do &e%0 &c!"
-                ).replace("%0", DateUtils.formatDate(storage.getTime()));
+                // Wiadomość finalna (np. "Zostałeś zbanowany za śmierć!") i typ wyświetlania
+                String finalBanMsg = plugin.getConfigManager().getMessage(
+                        "final_ban_message", "&cZostales zbanowany po smierci!"); // nowa wiadomość
+                finalBanMsg = finalBanMsg.replace("%date%", DateUtils.formatDate(storage.getTime()));
+                String deathbanDisplay = plugin.getConfig().getString("settings.deathban_display", "chat");
+                sendBanMessage(player, finalBanMsg, deathbanDisplay);
 
-                sendBanMessage(player, deathbanMsg, "chat");
+                // Dźwięk finalny (możesz ustawić w configu np. ENTITY_ENDER_DRAGON_GROWL)
+                String finalBanSound = plugin.getConfig().getString("settings.deathban_sound", "").toUpperCase();
+                if (!finalBanSound.isEmpty()) {
+                    try {
+                        player.playSound(
+                                Sound.sound(Key.key(finalBanSound.toLowerCase()), Sound.Source.PLAYER, 1.0f, 1.0f)
+                        );
+                    } catch (Exception ignored) {}
+                }
+
+                // Kick z klasyczną wiadomością deathban/kick (chat, bo kicks nie wspierają title!)
+                String deathbanMsg = plugin.getConfigManager().getMessage(
+                        "deathban", "&cZostales zbanowany do &e%0 &c!"
+                ).replace("%0", DateUtils.formatDate(storage.getTime()));
                 ChatUtils.kickWithMessage(player, deathbanMsg);
             }
         }, prebanSeconds * 20L);
@@ -128,6 +156,7 @@ public class PlayerBanListener implements Listener {
         }
     }
 
+    // Typ wyświetlania wiadomości: chat, title, actionbar
     private void sendBanMessage(Player player, String message, String displayType) {
         switch (displayType.toLowerCase()) {
             case "title" -> player.sendTitle(ChatUtils.colorToLegacy(message), "", 10, 40, 10);

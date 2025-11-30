@@ -27,7 +27,6 @@ public class ChatUtils {
         event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, color(message));
     }
 
-    // Zamiana & na §, tylko jeśli musisz legacy do starego API
     public static String colorToLegacy(String msg) {
         return msg.replace('&', '§');
     }

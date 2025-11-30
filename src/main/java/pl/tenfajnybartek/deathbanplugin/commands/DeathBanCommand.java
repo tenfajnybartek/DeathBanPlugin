@@ -21,13 +21,11 @@ public class DeathBanCommand implements CommandExecutor {
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         var configManager = plugin.getConfigManager();
 
-        // Permission check
         if (!sender.hasPermission("deathban.command.use")) {
             ChatUtils.sendMessage(sender,
                     configManager.getMessage("no_permission", "&cNie masz uprawnień."));
             return true;
         }
-        // Argument check
         if (args.length < 1 || args.length > 2) {
             ChatUtils.sendMessage(sender,
                     configManager.getMessage("usage", "&7Użycie: &f/deathban <unban|unbanall|checkban> [gracz]"));
